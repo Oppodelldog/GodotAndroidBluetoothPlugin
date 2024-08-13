@@ -23,6 +23,8 @@ import android.location.LocationManager;
 import android.os.Build;
 import android.os.Handler;
 import android.util.ArraySet;
+import android.util.Log;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
@@ -51,7 +53,7 @@ public class BluetoothManager extends GodotPlugin {
 
     private ScanSettings settings = null;
 
-    private static long  ScanPeriod = 100000;
+    private static long ScanPeriod = 100000;
 
     private BluetoothGatt bluetoothGatt; // This is a reference to the connected device
 
@@ -64,10 +66,7 @@ public class BluetoothManager extends GodotPlugin {
 
     // Permissions related functions
     public boolean hasLocationPermissions() {
-        if (ContextCompat.checkSelfPermission(context,
-                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
-                ContextCompat.checkSelfPermission(context,
-                        Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return false;
         } else {
             return true;
@@ -79,7 +78,6 @@ public class BluetoothManager extends GodotPlugin {
     }
 
     public BluetoothManager(Godot godot) {
-
         super(godot);
 
         // Get the context
@@ -91,8 +89,6 @@ public class BluetoothManager extends GodotPlugin {
         // Register the listener to the Bluetooth Status
         IntentFilter filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
         context.registerReceiver(mReceiver, filter);
-
-
 
         // Register the listener to the Location Status
         filter = new IntentFilter(LocationManager.PROVIDERS_CHANGED_ACTION);
@@ -109,7 +105,10 @@ public class BluetoothManager extends GodotPlugin {
         return "GodotBluetooth344";
     }
 
-    public boolean hasGetScanPeriod() { return true; }
+    public boolean hasGetScanPeriod() {
+        return true;
+    }
+
     public void setReportDuplicates(boolean report) {
         reportDuplicates = report;
     }
@@ -130,36 +129,15 @@ public class BluetoothManager extends GodotPlugin {
     @NonNull
     @Override
     public List<String> getPluginMethods() {
-        return Arrays.asList("sendDebugSignal",
-                "bluetoothStatus",
-                "scan",
-                "stopScan",
-                "hasLocationPermissions",
-                "locationStatus",
-                "connect",
-                "disconnect",
-                "listServicesAndCharacteristics",
-                "subscribeToCharacteristic",
-                "unsubscribeFromCharacteristic",
-                "writeBytesToCharacteristic",
-                "writeStringToCharacteristic",
-                "readFromCharacteristic",
-                "setScanPeriod",
-                "getScanPeriod",
-                "hasGetScanPeriod",
-                "setReportDuplicates",
-                "getReportDuplicates");
+        return Arrays.asList("sendDebugSignal", "bluetoothStatus", "scan", "stopScan", "hasLocationPermissions", "locationStatus", "connect", "disconnect", "listServicesAndCharacteristics", "subscribeToCharacteristic", "unsubscribeFromCharacteristic", "writeBytesToCharacteristic", "writeStringToCharacteristic", "readFromCharacteristic", "setScanPeriod", "getScanPeriod", "hasGetScanPeriod", "setReportDuplicates", "getReportDuplicates");
     }
 
     public void sendDebugSignal(String s) {
-
         emitSignal("_on_debug_message", s);
         Log.d("BluetoothManager", s);
-
     }
 
     public void sendNewDevice(ScanResult newDevice) {
-
         org.godotengine.godot.Dictionary deviceData = new org.godotengine.godot.Dictionary();
 
         deviceData.put("name", newDevice.getScanRecord().getDeviceName());
@@ -199,8 +177,7 @@ public class BluetoothManager extends GodotPlugin {
 
                         if (hasPermission(Manifest.permission.BLUETOOTH_SCAN)) {
 
-                            sendDebugSignal(
-                                    "Cannot stop a scan because you do not have Manifest.permission.BLUETOOTH_SCAN");
+                            sendDebugSignal("Cannot stop a scan because you do not have Manifest.permission.BLUETOOTH_SCAN");
                             return;
                         }
                         bluetoothLeScanner.stopScan(leScanCallback);
@@ -209,8 +186,7 @@ public class BluetoothManager extends GodotPlugin {
                 }, ScanPeriod);
 
                 scanning = true;
-                bluetoothLeScanner.startScan(null, settings, leScanCallback );
-
+                bluetoothLeScanner.startScan(null, settings, leScanCallback);
             }
         } else {
             sendDebugSignal("Cannot start a scan because you do not have location permissions");
@@ -218,7 +194,6 @@ public class BluetoothManager extends GodotPlugin {
     }
 
     public void stopScan() {
-
         if (scanning) {
             scanning = false;
             if (hasPermission(Manifest.permission.BLUETOOTH_SCAN)) {
@@ -232,20 +207,17 @@ public class BluetoothManager extends GodotPlugin {
     }
 
 
-    private ScanCallback leScanCallback =
-            new ScanCallback() {
-                @Override
-                public void onScanResult(int callbackType, ScanResult result) {
-                     // We are only interested in devices with name
-                    if (result != null && result.getDevice() != null && result.getDevice().getAddress() != null && result.getScanRecord().getDeviceName() != null) {
-                         if (!devices.containsKey(result.getDevice().getAddress())) {
-                            devices.put(result.getDevice().getAddress(), result);
-                            sendNewDevice(result);
-                        } else {
-                             if (reportDuplicates) {
-                                sendNewDevice(result);
-                            }
-                        }
+    private ScanCallback leScanCallback = new ScanCallback() {
+        @Override
+        public void onScanResult(int callbackType, ScanResult result) {
+            // We are only interested in devices with name
+            if (result != null && result.getDevice() != null && result.getDevice().getAddress() != null && result.getScanRecord().getDeviceName() != null) {
+                if (!devices.containsKey(result.getDevice().getAddress())) {
+                    devices.put(result.getDevice().getAddress(), result);
+                    sendNewDevice(result);
+                } else {
+                    if (reportDuplicates) {
+                        sendNewDevice(result);
                     }
                 }
             }
@@ -254,12 +226,10 @@ public class BluetoothManager extends GodotPlugin {
 
     // Status functions
     public boolean bluetoothStatus() {
-
         return mBluetoothAdapter.isEnabled();
     }
 
     public boolean locationStatus() {
-
         Boolean gps_enabled = false;
         Boolean network_enabled = false;
 
@@ -300,8 +270,7 @@ public class BluetoothManager extends GodotPlugin {
             final String action = intent.getAction();
 
             if (action.equals(BluetoothAdapter.ACTION_STATE_CHANGED)) {
-                final int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE,
-                        BluetoothAdapter.ERROR);
+                final int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
                 switch (state) {
                     case BluetoothAdapter.STATE_OFF:
                         emitSignal("_on_bluetooth_status_change", "off");
@@ -351,12 +320,9 @@ public class BluetoothManager extends GodotPlugin {
         @Override
         // Called when a devices connects or disconnects
         public void onConnectionStateChange(final BluetoothGatt gatt, final int status, final int newState) {
-
             if (status == BluetoothGatt.GATT_SUCCESS) {
-
                 switch (newState) {
                     case BluetoothProfile.STATE_DISCONNECTED:
-
                         emitSignal("_on_connection_status_change", "disconnected");
                         connected = false;
 
@@ -365,13 +331,11 @@ public class BluetoothManager extends GodotPlugin {
                         connected = true;
                         // Read services and characteristics
                         listServicesAndCharacteristics();
-
                         emitSignal("_on_connection_status_change", "connected");
 
                         break;
                 }
             } else { // There was an issue connecting
-
                 sendDebugSignal(Integer.toString(status));
             }
         }
@@ -379,16 +343,14 @@ public class BluetoothManager extends GodotPlugin {
         @Override
         // Called after a BluetoothGatt.discoverServices() call
         public void onServicesDiscovered(final BluetoothGatt gatt, final int status) {
-
             sendServicesAndCharacteristics(bluetoothGatt.getServices());
         }
 
         @Override
         // Result of a characteristic read operation
-        public void onCharacteristicRead(BluetoothGatt gatt,
-                BluetoothGattCharacteristic characteristic,
-                // byte[] value, For Android Tiramisu we need this
-                int status) {
+        public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic,
+                                         // byte[] value, For Android Tiramisu we need this
+                                         int status) {
 
             sendDebugSignal("onCharacteristicRead");
 
@@ -402,9 +364,7 @@ public class BluetoothManager extends GodotPlugin {
 
         @Override
         // Result of a characteristic read operation
-        public void onCharacteristicWrite(BluetoothGatt gatt,
-                BluetoothGattCharacteristic characteristic,
-                int status) {
+        public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             sendDebugSignal("onCharacteristicWrite");
 
             if (status == BluetoothGatt.GATT_SUCCESS) {
@@ -416,9 +376,8 @@ public class BluetoothManager extends GodotPlugin {
         @Override
         // Result of a characteristic read/write operation
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic
-        // ,byte[] value, For Android Tiramisu we need this
+                                            // ,byte[] value, For Android Tiramisu we need this
         ) {
-
             org.godotengine.godot.Dictionary data = new org.godotengine.godot.Dictionary();
 
             String characteristic_uuid = characteristic.getUuid().toString();
@@ -436,7 +395,6 @@ public class BluetoothManager extends GodotPlugin {
     };
 
     public void connect(String address) {
-
         if (!connected) {
             sendDebugSignal("Connecting to device with address " + address);
             stopScan();
@@ -445,12 +403,12 @@ public class BluetoothManager extends GodotPlugin {
 
                 return;
             }
+
             bluetoothGatt = devices.get(address).getDevice().connectGatt(context, false, btleGattCallback);
         }
     }
 
     public void disconnect() {
-
         if (connected) {
             sendDebugSignal("Disconnecting device");
             if (hasPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
@@ -458,13 +416,13 @@ public class BluetoothManager extends GodotPlugin {
 
                 return;
             }
+
             bluetoothGatt.disconnect();
         }
     }
 
     private void sendServicesAndCharacteristics(List<BluetoothGattService> gattServices) {
-        if (gattServices == null)
-            return;
+        if (gattServices == null) return;
 
         emitSignal("_on_characteristic_finding", "processing");
 
@@ -501,8 +459,7 @@ public class BluetoothManager extends GodotPlugin {
                     characteristicData.put("writable", true);
                 }
 
-                if ((gattCharacteristic.getProperties()
-                        & BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE) != 0) {
+                if ((gattCharacteristic.getProperties() & BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE) != 0) {
                     characteristicData.put("writable_no_response", true);
                 }
 
@@ -515,9 +472,7 @@ public class BluetoothManager extends GodotPlugin {
 
     // Read from characteristic
     private void readFromCharacteristic(String serviceUUID, String characteristicUUID) {
-
         if (connected) {
-
             UUID service = UUID.fromString(serviceUUID);
             UUID characteristic = UUID.fromString(characteristicUUID);
 
@@ -534,8 +489,7 @@ public class BluetoothManager extends GodotPlugin {
             }
 
             if (hasPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
-                sendDebugSignal(
-                        "Cannot read characteristics because you do not have Manifest.permission.BLUETOOTH_CONNECT");
+                sendDebugSignal("Cannot read characteristics because you do not have Manifest.permission.BLUETOOTH_CONNECT");
 
                 return;
             }
@@ -549,9 +503,7 @@ public class BluetoothManager extends GodotPlugin {
 
     // Write bytes to characteristic, automatically detects the write type
     private void writeBytesToCharacteristic(String serviceUUID, String characteristicUUID, byte[] data) {
-
         if (connected) {
-
             UUID service = UUID.fromString(serviceUUID);
             UUID characteristic = UUID.fromString(characteristicUUID);
 
@@ -568,20 +520,18 @@ public class BluetoothManager extends GodotPlugin {
             }
 
             if (hasPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
-                sendDebugSignal(
-                        "Cannot write characteristic because you do not have Manifest.permission.BLUETOOTH_CONNECT");
+                sendDebugSignal("Cannot write characteristic because you do not have Manifest.permission.BLUETOOTH_CONNECT");
 
                 return;
             }
+
             bluetoothGatt.writeCharacteristic(c);
         }
     }
 
     // Write bytes to characteristic, automatically detects the write type
     private void writeStringToCharacteristic(String serviceUUID, String characteristicUUID, String data) {
-
         if (connected) {
-
             UUID service = UUID.fromString(serviceUUID);
             UUID characteristic = UUID.fromString(characteristicUUID);
 
@@ -598,30 +548,23 @@ public class BluetoothManager extends GodotPlugin {
             }
 
             if (hasPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
-                sendDebugSignal(
-                        "Cannot write characteristic because you do not have Manifest.permission.BLUETOOTH_CONNECT");
+                sendDebugSignal("Cannot write characteristic because you do not have Manifest.permission.BLUETOOTH_CONNECT");
 
                 return;
             }
+
             bluetoothGatt.writeCharacteristic(c);
         }
     }
 
     // Subscribe to characteristic
     private void subscribeToCharacteristic(String serviceUUID, String characteristicUUID) {
-
         if (connected) {
-
             UUID service = UUID.fromString(serviceUUID);
             UUID characteristic = UUID.fromString(characteristicUUID);
 
             BluetoothGattCharacteristic c = bluetoothGatt.getService(service).getCharacteristic(characteristic);
-            if (hasPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
-                sendDebugSignal(
-                        "Cannot subscribe to characteristic because you do not have Manifest.permission.BLUETOOTH_CONNECT");
 
-                return;
-            }
             bluetoothGatt.setCharacteristicNotification(c, true);
 
             // Set the Client Characteristic Config Descriptor to allow server initiated
@@ -629,13 +572,12 @@ public class BluetoothManager extends GodotPlugin {
             UUID CONFIG_DESCRIPTOR = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
             BluetoothGattDescriptor desc = c.getDescriptor(CONFIG_DESCRIPTOR);
             desc.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-            bluetoothGatt.writeDescriptor(desc);
 
+            bluetoothGatt.writeDescriptor(desc);
         }
     }
 
     private void unsubscribeFromCharacteristic(String serviceUUID, String characteristicUUID) {
-
         if (connected) {
 
             UUID service = UUID.fromString(serviceUUID);
@@ -650,8 +592,7 @@ public class BluetoothManager extends GodotPlugin {
             desc.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
 
             if (hasPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
-                sendDebugSignal(
-                        "Cannot unsubscribe from characteristic because you do not have Manifest.permission.BLUETOOTH_CONNECT");
+                sendDebugSignal("Cannot unsubscribe from characteristic because you do not have Manifest.permission.BLUETOOTH_CONNECT");
 
                 return;
             }

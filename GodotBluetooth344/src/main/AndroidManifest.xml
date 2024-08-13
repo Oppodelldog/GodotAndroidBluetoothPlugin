@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.godotbluetooth344">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application>
         <meta-data
-            android:name="org.godotengine.plugin.v1.GodotBluetooth344"
+            android:name="org.godotengine.plugin.v2.GodotBluetooth344"
             android:value="com.example.godotbluetooth344.BluetoothManager" />
         />
 
